@@ -1,0 +1,404 @@
+#Question 1 code
+
+import arcpy
+arcpy.env.overwriteOutput=True
+arcpy.env.workspace =r"E:\428\Assignment_2\MyProject\MyProject2.gdb"
+
+
+#make layers
+
+arcpy.management.MakeFeatureLayer("Victoria_Crime", "viccrimelayerq1")
+arcpy.management.MakeFeatureLayer("Vic_Parks","parklayerq1")
+                                 
+
+#Clip features
+arcpy.analysis.Clip('viccrimelayerq1', 'parklayerq1','clippedq1')
+
+#Get Count
+count = arcpy.management.GetCount('clippedq1')
+print (count)
+2396
+
+
+#Question 2
+
+#Set Workplace 
+
+import arcpy
+arcpy.env.overwriteOutput=True
+arcpy.env.workspace =r"E:\428\Assignment_2\MyProject\MyProject2.gdb"
+
+#Make Layers
+arcpy.management.MakeFeatureLayer("E:\\428\\Assignment_2\\MyProject\\MyProject2.gdb\\Victoria_Crime","viccrimelayerq2")
+arcpy.management.MakeFeatureLayer("E:\\428\\Assignment_2\\MyProject\\MyProject2.gdb\\Neighbourhoods","neighlayerq2")
+
+#Select Features
+arcpy.management.SelectLayerByAttribute("viccrimelayerq2", "NEW_SELECTION", "incident_d LIKE '%2016%' And parent_inc = 'Property Crime'", None)
+arcpy.management.SelectLayerByAttribute("neighlayerq2", "NEW_SELECTION", "Neighbourh = 'Oaklands' Or Neighbourh = 'Fernwood' Or Neighbourh = 'North Jubilee' Or Neighbourh = 'South Jubilee'", None)
+
+#Intersect Parks and Neighborhoods
+
+arcpy.analysis.Intersect("Vic_Parks #;neighlayerq2 #", r"E:\428\Assignment_2\MyProject\MyProject2.gdb\parks_selectedn_q2", "ALL", None, "INPUT")
+
+
+#Make Buffer around selected parks
+arcpy.analysis.Buffer("parks_selectedn_q2", r"E:\428\Assignment_2\MyProject\MyProject.gdb\parks_selectedn_q2_Buffer", "500 Meters", "FULL", "ROUND", "ALL", None, "PLANAR")
+
+#Clip selected features with buffer
+arcpy.analysis.Clip("viccrimelayerq2", "parks_selectedn_q2_Buffer", r"E:\428\Assignment_2\MyProject\MyProject.gdb\parks_selectedn_q2_Buffer_Cl", None)
+
+#Get count Clipped layer 
+count = arcpy.management.GetCount("parks_selectedn_q2_Buffer_Cl")
+print (count)
+# Answer = 276
+
+#Question 3
+
+#Set Workplace
+
+import arcpy
+arcpy.env.overwriteOutput=True
+arcpy.env.workspace =r"E:\428\Assignment_2\MyProject\MyProject2.gdb"
+
+#Make Layers
+arcpy.management.MakeFeatureLayer("E:\\428\\Assignment_2\\MyProject\\MyProject2.gdb\\Victoria_Crime",'Vic_crime')
+arcpy.management.MakeFeatureLayer("E:\\428\\Assignment_2\\MyProject\\MyProject2.gdb\\Neighbourhoods",'Neighbourhood')
+arcpy.management.MakeFeatureLayer("E:\\428\\Assignment_2\\MyProject\\MyProject2.gdb\\Schools",'Schools')
+
+#Select Features
+
+
+#Crimes
+
+arcpy.analysis.Select("Victoria_Crime", r"E:\428\Assignment_2\MyProject\MyProject.gdb\Victoria_Crime_Select", "parent_inc = 'Drugs' Or parent_inc = 'Liquor' Or parent_inc = 'Disorder'")
+arcpy.analysis.Select("Victoria_Crime_Select", r"E:\428\Assignment_2\MyProject\MyProject.gdb\Victoria_Crime_Select2", "incident_d LIKE '%2017%'")
+#Neighbourhoods
+
+arcpy.management.SelectLayerByAttribute("Neighbourhood", "NEW_SELECTION", "Neighbourh <> 'Victoria West'", None)
+
+#Intersect selected Neighbourhoods with Schools
+
+arcpy.analysis.Intersect("Schools #;Neighbourhood #", r"E:\428\Assignment_2\MyProject\MyProject.gdb\Schools_Intersect", "ALL", None, "INPUT")
+
+#Buffer Intersected Schools and Neighbourhoods
+
+arcpy.analysis.Buffer("Schools_Intersect", r"E:\428\MyProject2\MyProject2.gdb\Schools_Intersect_Buffer", "500 Meters", "FULL", "ROUND", "ALL", None, "PLANAR")
+
+#Clip Buffer with Crimes
+
+arcpy.analysis.Clip("Victoria_Crime_Select2", "Schools_Intersect_Buffer", r"E:\428\Assignment_2\MyProject\MyProject.gdb\Victoria_Crime_Clip", None)
+
+#Get Count 
+
+count = arcpy.management.GetCount("Victoria_Crime_Clip")
+print (count)
+
+#answer = 748
+
+
+#Question 4
+
+#set up work place
+
+import arcpy
+arcpy.env.overwriteOutput=True
+arcpy.env.workspace =r"E:\428\Assignment_2\MyProject\MyProject2.gdb"
+
+
+#Make Layers
+
+arcpy.management.MakeFeatureLayer('Neighbourhoods',"Neighbourhood")
+arcpy.management.MakeFeatureLayer('Vic_Parks',"Vic_parks")
+arcpy.management.MakeFeatureLayer('Victoria_crime',"Vic_crime")
+
+#Setup Variables 
+
+crimeYear= 2017
+crimetype = 'Property Crime'
+
+#Define property crime in 2017
+
+crimeQ4 = "(incident_d LIKE '%%%s%%' "%crimeYear + ") And (parent_inc LIKE '%%%s%%' "%crimetype + ")"
+
+#Make Selection
+
+arcpy.analysis.Select("Vic_crime", "Propertycrime2017", crimeQ4)
+print("select property crimes in 2017")
+
+#Select Neighbourhoods
+
+Q4neighbourhoods = "Neighbourh = 'Fernwood' Or Neighbourh = 'South Jubilee' Or Neighbourh = 'North Jubilee' Or Neighbourh = 'Oaklands'"
+
+arcpy.analysis.Select('Neighbourhood', 'Q4hoods',Q4neighbourhoods)
+print("creates selection of desired locations: Q4hoods")
+
+#clip parks to neighbourhoods
+
+arcpy.analysis.Clip("Vic_parks", "Q4hoods", "parks_hoodsq4")
+
+#bufferparks
+
+arcpy.analysis.Buffer("parks_hoodsq4", "parks_hoodsq4_Buffer", "100 Meters", "FULL", "ROUND", "ALL", None, "PLANAR")
+
+# Intersect crimes to buffer
+
+arcpy.analysis.Intersect("Propertycrime2017 ;parks_hoodsq4_Buffer ", "crime_park_Intersectq4", "ALL", None, "INPUT")
+print("2017 property crimes within 100m of parks in neighbourhood")
+
+# Get Count
+
+count = arcpy.management.GetCount ("crime_park_Intersectq4")
+print (count)
+
+#Answer 49
+
+#Question 5
+
+#set up work place
+
+import arcpy
+arcpy.env.overwriteOutput=True
+arcpy.env.workspace =r"E:\428\Assignment_2\MyProject\MyProject2.gdb"
+
+
+#Make Layers
+
+arcpy.management.MakeFeatureLayer('Neighbourhood',"Neighbourhood")
+arcpy.management.MakeFeatureLayer('Schools',"Schools")
+arcpy.management.MakeFeatureLayer('Victoria_crime',"Vic_crime")
+
+#Setup Variables 
+
+crimeYear = '2015'
+crimetype = 'Liquor'
+crimetype2 = 'Drugs'
+crimetype3 = 'Disorder'
+
+#Define crime in 2015
+
+#Make Selection
+
+arcpy.management.SelectLayerByAttribute("Vic_crime","NEW_SELECTION", "incident_d LIKE '%%%s%%'"%crimeYear)
+arcpy.management.SelectLayerByAttribute("Vic_crime", "SUBSET_SELECTION", "parent_inc LIKE '%s'"%crimetype + "Or parent_inc LIKE '%s'"%crimetype2 + "Or parent_inc LIKE '%s'"%crimetype3)
+
+#Select Neighbourhoods
+
+Q5neighbourhoods = "Neighbourh <> 'Victoria West'"
+
+arcpy.analysis.Select('Neighbourhood',"Q5hoods", Q5neighbourhoods)
+print("creates selection of desired locations: Q5hoods")
+
+#clip parks to neighbourhoods
+
+arcpy.analysis.Clip("Schools", "Q5hoods", "Schools_hoodsQ5")
+
+#bufferparks
+
+arcpy.analysis.Buffer("Schools_hoodsQ5", "Schools_hoodsQ5_Buffer", "100 Meters", "FULL", "ROUND", "ALL", None, "PLANAR")
+
+# Intersect crimes to buffer
+
+arcpy.analysis.Intersect("Vic_crime ;Schools_hoodsQ5_Buffer ", "Schools_hoods_Crimes_Intersectq5", "ALL", None, "INPUT")
+print("2015 crimes within 100m of schools in neighbourhood")
+
+# Get Count
+
+count = arcpy.management.GetCount ("Schools_hoods_Crimes_Intersectq5")
+print (count)
+
+#Answer 156
+
+#Question 6 
+
+#set up work place
+
+import numpy
+import arcpy
+arcpy.env.overwriteOutput=True
+arcpy.env.workspace =r"E:\428\Assignment_2\MyProject\Q6geodatabase.gdb"
+
+# create lists to keep track of days for each crime type
+
+robbery_days = [0,0,0,0,0,0,0]
+assault_days = [0,0,0,0,0,0,0]
+property_crime_days = [0,0,0,0,0,0,0]
+theft_days = [0,0,0,0,0,0,0]
+theft_from_vehicle_days = [0,0,0,0,0,0,0]
+
+
+# Loop Through data set using a cursor 
+
+columns = ['day_of_wee', 'parent_inc'] 
+curObj = arcpy.da.SearchCursor("Victoria_Crime", columns) 
+for row in curObj:
+   if row[1]=='Robbery':
+        if row[0]=='Monday':
+            robbery_days[0] = robbery_days[0] + 1
+        elif row[0]=='Tuesday':
+            robbery_days[1] = robbery_days[1] + 1
+        elif row[0]=='Wednesday':
+            robbery_days[2] = robbery_days[2] + 1
+        elif row[0]=='Thursday':
+            robbery_days[3] = robbery_days[3] + 1
+        elif row[0]=='Friday':
+            robbery_days[4] = robbery_days[4] + 1
+        elif row[0]=='Saturday':
+            robbery_days[5] = robbery_days[5] + 1
+        elif row[0]=='Sunday':
+            robbery_days[6] = robbery_days[6] + 1
+   elif row[1]=='Assault':
+        if row[0]=='Monday':
+            assault_days[0] = assault_days[0] + 1
+        elif row[0]=='Tuesday':
+            assault_days[1] = assault_days[1] + 1
+        elif row[0]=='Wednesday':
+            assault_days[2] = assault_days[2] + 1
+        elif row[0]=='Thursday':
+            assault_days[3] = assault_days[3] + 1
+        elif row[0]=='Friday':
+            assault_days[4] = assault_days[4] + 1
+        elif row[0]=='Saturday':
+            assault_days[5] = assault_days[5] + 1
+        elif row[0]=='Sunday':
+            assault_days[6] = assault_days[6] + 1
+   elif row[1]=='Property Crime':
+        if row[0]=='Monday':
+            property_crime_days[0] = property_crime_days[0] + 1
+        elif row[0]=='Tuesday':
+            property_crime_days[1] = property_crime_days[1] + 1
+        elif row[0]=='Wednesday':
+            property_crime_days[2] = property_crime_days[2] + 1
+        elif row[0]=='Thursday':
+            property_crime_days[3] = property_crime_days[3] + 1
+        elif row[0]=='Friday':
+            property_crime_days[4] = property_crime_days[4] + 1
+        elif row[0]=='Saturday':
+            property_crime_days[5] = property_crime_days[5] + 1
+        elif row[0]=='Sunday':
+            property_crime_days[6] = property_crime_days[6] + 1
+   elif row[1]=='Theft':
+        if row[0]=='Monday':
+            theft_days[0] = theft_days[0] + 1
+        elif row[0]=='Tuesday':
+            theft_days[1] = theft_days[1] + 1
+        elif row[0]=='Wednesday':
+            theft_days[2] = theft_days[2] + 1
+        elif row[0]=='Thursday':
+            theft_days[3] = theft_days[3] + 1
+        elif row[0]=='Friday':
+            theft_days[4] = theft_days[4] + 1
+        elif row[0]=='Saturday':
+            theft_days[5] = theft_days[5] + 1
+        elif row[0]=='Sunday':
+            theft_days[6] = theft_days[6] + 1
+   elif row[1]=='Theft from Vehicle':
+        if row[0]=='Monday':
+            theft_from_vehicle_days[0] = theft_from_vehicle_days[0] + 1
+        elif row[0]=='Tuesday':
+            theft_from_vehicle_days[1] = theft_from_vehicle_days[1] + 1
+        elif row[0]=='Wednesday':
+            theft_from_vehicle_days[2] = theft_from_vehicle_days[2] + 1
+        elif row[0]=='Thursday':
+            theft_from_vehicle_days[3] = theft_from_vehicle_days[3] + 1
+        elif row[0]=='Friday':
+            theft_from_vehicle_days[4] = theft_from_vehicle_days[4] + 1
+        elif row[0]=='Saturday':
+            theft_from_vehicle_days[5] = theft_from_vehicle_days[5] + 1
+        elif row[0]=='Sunday':
+            theft_from_vehicle_days[6] = theft_from_vehicle_days[6] + 1
+
+# find and print day with highest occurrence of robbery
+
+from operator import itemgetter
+
+index, value = max(enumerate(robbery_days), key=itemgetter(1))
+if index==0:
+    day='Monday'
+elif index==1:
+    day='Tuesday'
+elif index==2:
+    day='Wednesday'
+elif index==3:
+    day='Thursday'
+elif index==4:
+    day='Friday'
+elif index==5:
+    day='Saturday'
+elif index==6:
+    day='Sunday'
+print('Highest rate of robbery was on ', day, ' (', value, ')')
+
+index, value = max(enumerate(assault_days), key=itemgetter(1))
+if index==0:
+    day='Monday'
+elif index==1:
+    day='Tuesday'
+elif index==2:
+    day='Wednesday'
+elif index==3:
+    day='Thursday'
+elif index==4:
+    day='Friday'
+elif index==5:
+    day='Saturday'
+elif index==6:
+    day='Sunday'
+print('Highest rate of assualt was on ', day, ' (', value, ')')
+
+index, value = max(enumerate(property_crime_days), key=itemgetter(1))
+if index==0:
+    day='Monday'
+elif index==1:
+    day='Tuesday'
+elif index==2:
+    day='Wednesday'
+elif index==3:
+    day='Thursday'
+elif index==4:
+    day='Friday'
+elif index==5:
+    day='Saturday'
+elif index==6:
+    day='Sunday'      
+print('Highest rate of property crime on ', day, ' (', value, ')')
+
+index, value = max(enumerate(theft_days), key=itemgetter(1))
+if index==0:
+    day='Monday'
+elif index==1:
+    day='Tuesday'
+elif index==2:
+    day='Wednesday'
+elif index==3:
+    day='Thursday'
+elif index==4:
+    day='Friday'
+elif index==5:
+    day='Saturday'
+elif index==6:
+    day='Sunday'      
+print('Highest rate of theft was on ', day, ' (', value, ')')
+
+index, value = max(enumerate(theft_from_vehicle_days), key=itemgetter(1))
+if index==0:
+    day='Monday'
+elif index==1:
+    day='Tuesday'
+elif index==2:
+    day='Wednesday'
+elif index==3:
+    day='Thursday'
+elif index==4:
+    day='Friday'
+elif index==5:
+    day='Saturday'
+elif index==6:
+    day='Sunday'      
+print('Highest rate of theft from vehicles was on ', day, ' (', value, ')')
+
+print (theft_from_vehicle_days)
+print (theft_days)
+print (property_crime_days)
+print (assault_days)
+print (robbery_days)
+    
